@@ -41,7 +41,7 @@ jobs:
 
             echo "🚀 프론트 실행"
             docker run -d --name fe-web \
-              -p 80:3000 \
+              -p 80:80 \
               ${{ secrets.DOCKER_USERNAME }}/fe-web:latest
 
             echo "🚀 모델 서버 실행"

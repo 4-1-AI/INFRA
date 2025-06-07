@@ -1,0 +1,50 @@
+name: Deploy all services 
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Deploy each service via docker run
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SERVER_KEY }}
+          script: |
+            echo "🔑 Docker Login"
+            docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+            echo "🧼 기존 컨테이너 정리"
+            docker rm -f be-server || true
+            docker rm -f fe-web || true
+            docker rm -f ai-server || true
+
+            echo "⬇️ 이미지 Pull"
+            docker pull ${{ secrets.DOCKER_USERNAME }}/be-server:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/fe-web:latest
+            docker pull ${{ secrets.DOCKER_USERNAME }}/ai-server:latest
+
+            echo "🚀 백엔드 실행"
+            docker run -d --name be-server \
+              -p 8080:8080 \
+              -e SPRING_DATASOURCE_URL=jdbc:mysql://${{ secrets.DATABASE_HOST }}:${{ secrets.DATABASE_PORT }}/${{ secrets.DATABASE_NAME }} \
+              -e SPRING_DATASOURCE_USERNAME=${{ secrets.DATABASE_USERNAME }} \
+              -e SPRING_DATASOURCE_PASSWORD=${{ secrets.DATABASE_PASSWORD }} \
+              -e SMS_APIKEY=${{ secrets.SMS_APIKEY }} \
+              -e SMS_SECRETKEY=${{ secrets.SMS_SECRETKEY }} \
+              -e SMS_ADMINPHONE=${{ secrets.SMS_ADMINPHONE }} \
+              ${{ secrets.DOCKER_USERNAME }}/be-server:latest
+
+            echo "🚀 프론트 실행"
+            docker run -d --name fe-web \
+              -p 80:3000 \
+              ${{ secrets.DOCKER_USERNAME }}/fe-web:latest
+
+            echo "🚀 모델 서버 실행"
+            docker run -d --name ai-server \
+              -p 8000:8000 \
+              ${{ secrets.DOCKER_USERNAME }}/ai-server:latest

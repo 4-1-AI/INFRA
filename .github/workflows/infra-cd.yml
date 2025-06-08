@@ -19,14 +19,13 @@ jobs:
             docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
 
             echo "🧼 기존 컨테이너 정리"
-            docker rm -f be-server || true
-            docker rm -f fe-web || true
-            docker rm -f ai-server || true
+            echo "🧼 기존 컨테이너/이미지 정리"
+            docker rm -f be-server fe-web ai-server || true
 
             echo "⬇️ 이미지 Pull"
             docker pull ${{ secrets.DOCKER_USERNAME }}/be-server:latest
-            docker pull ${{ secrets.DOCKER_USERNAME }}/fe-web:latest
-            docker pull ${{ secrets.DOCKER_USERNAME }}/ai-server:latest
+            # docker pull ${{ secrets.DOCKER_USERNAME }}/fe-web:latest
+            # docker pull ${{ secrets.DOCKER_USERNAME }}/ai-server:latest
 
             echo "🚀 백엔드 실행"
             docker run -d --name be-server \
@@ -39,12 +38,13 @@ jobs:
               -e SMS_ADMINPHONE=${{ secrets.SMS_ADMINPHONE }} \
               ${{ secrets.DOCKER_USERNAME }}/be-server:latest
 
-            echo "🚀 프론트 실행"
-            docker run -d --name fe-web \
-              -p 80:80 \
-              ${{ secrets.DOCKER_USERNAME }}/fe-web:latest
 
-            echo "🚀 모델 서버 실행"
-            docker run -d --name ai-server \
-              -p 8000:8000 \
-              ${{ secrets.DOCKER_USERNAME }}/ai-server:latest
+            # echo "🚀 프론트 실행"
+            # docker run -d --name fe-web \
+            #   -p 80:80 \
+            #   ${{ secrets.DOCKER_USERNAME }}/fe-web:latest
+
+            # echo "🚀 모델 서버 실행"
+            # docker run -d --name ai-server \
+            #   -p 8000:8000 \
+            #   ${{ secrets.DOCKER_USERNAME }}/ai-server:latest
